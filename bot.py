@@ -55,7 +55,7 @@ def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     buttons = [types.KeyboardButton(dept) for dept in DATA_BASE.keys()]
     markup.add(*buttons)
-    bot.send_message(message.chat.id, "مرحباً بك دكتور محمد!\nاختر القسم الدراسي:", reply_markup=markup)
+    bot.send_message(message.chat.id, "مرحباً بك دكتور/ة في بوت الجامعة UTS من إنشاء محمد الحلو!\nاختر القسم الدراسي:", reply_markup=markup)
 
 @bot.message_handler(func=lambda m: m.text in DATA_BASE.keys())
 def handle_dept(message):
