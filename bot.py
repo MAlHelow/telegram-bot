@@ -1,12 +1,31 @@
+import os
 import telebot
 from telebot import types
+from flask import Flask
+from threading import Thread
 
-# ضع التوكن الخاص بك هنا
-API_TOKEN = '8728241420:AAF6rmQfHyLRBJx-CfyBf44ol3F4atSOZXg'
+# --- إعداد سيرفر وهمي لتجنب إغلاق Render المجاني ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "البوت يعمل بنجاح!"
+
+def run():
+    # Render يرسل المنفذ تلقائياً عبر متغير البيئة PORT
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.daemon = True
+    t.start()
+
+# --- إعداد البوت ---
+API_TOKEN = '8728241420:AAF6rmQfHyLRBJx-CfyBf44ol3F4atSOZXg' # ضع التوكن هنا
 bot = telebot.TeleBot(API_TOKEN)
 
 # --- قاعدة بيانات المواد والمستندات ---
-# ملاحظة: يمكنك إضافة أو تعديل التسجيلات بسهولة هنا
 COURSES = {
     "📚 القسم النظري": {
         "🧪 كيمياء عقاقير": {
@@ -49,9 +68,9 @@ COURSES = {
             "المستند الثاني": ["التسجيل السادس", "التسجيل السابع", "التسجيل الثامن", "التسجيل التاسع", "التسجيل العاشر", "التسجيل الحادي عشر"]
         },
         "🔬 أحياء دقيقة نظري": {
-            "المستند الأول": ["التسجيل الأول"],
-            "المستند الثاني": ["التسجيل الثاني"],
-            "المستند الثالث": [], "المستند الرابع": [], "المستند الخامس": [], "المستند السادس": [], "المستند السابع": [], "المستند الثامن": []
+            "المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"],
+            "المستند الثالث": [], "المستند الرابع": [], "المستند الخامس": [], 
+            "المستند السادس": [], "المستند السابع": [], "المستند الثامن": []
         },
         "🧪 تقنية صيدلانية نظري": {
             "المستند الأول": ["التسجيل الأول", "التسجيل الثاني"],
@@ -61,53 +80,49 @@ COURSES = {
     },
     "🛠️ القسم العملي": {
         "💊 تقنية صيدلانية عملي": {f"المستند {i}": [] for i in range(1, 6)},
-        "🔬 أحياء دقيقة عملي": {"المستند": []},
+        "🔬 أحياء دقيقة عملي": {"المستند الوحيد": []},
         "🧬 تحليل آلي عملي": {f"المستند {i}": [] for i in range(1, 7)}
     }
 }
 
 # --- لوحة التحكم والردود ---
 
-@bot.message_handler(commands=['start', 'help'])
+@bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1 = types.KeyboardButton("📚 القسم النظري")
-    item2 = types.KeyboardButton("🛠️ القسم العملي")
-    markup.add(item1, item2)
-    bot.reply_to(message, "أهلاً بك يا دكتور! اختر القسم المطلوب:", reply_markup=markup)
+    markup.add("📚 القسم النظري", "🛠️ القسم العملي")
+    bot.reply_to(message, "مرحباً بك دكتور محمد! اختر القسم المطلوب للوصول للمحاضرات:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text in COURSES.keys())
+@bot.message_handler(func=lambda m: m.text in COURSES.keys())
 def show_subjects(message):
     section = message.text
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for subject in COURSES[section].keys():
-        markup.add(types.KeyboardButton(subject))
-    markup.add(types.KeyboardButton("⬅️ العودة للقائمة الرئيسية"))
-    bot.send_message(message.chat.id, f"اختر المادة من {section}:", reply_markup=markup)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    subjects = list(COURSES[section].keys())
+    markup.add(*[types.KeyboardButton(s) for s in subjects])
+    markup.add("⬅️ عودة")
+    bot.send_message(message.chat.id, f"مواد {section}:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: any(message.text in subjects for subjects in [COURSES[s].keys() for s in COURSES]))
-def show_documents(message):
-    subject_name = message.text
-    # البحث عن القسم الذي تنتمي له المادة
-    section = "📚 القسم النظري" if subject_name in COURSES["📚 القسم النظري"] else "🛠️ القسم العملي"
-    
+@bot.message_handler(func=lambda m: any(m.text in COURSES[sec] for sec in COURSES))
+def show_docs(message):
+    subject = message.text
+    section = "📚 القسم النظري" if subject in COURSES["📚 القسم النظري"] else "🛠️ القسم العملي"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for doc in COURSES[section][subject_name].keys():
-        markup.add(types.KeyboardButton(f"{subject_name} - {doc}"))
-    markup.add(types.KeyboardButton("⬅️ العودة للقائمة الرئيسية"))
-    bot.send_message(message.chat.id, f"اختر المحاضرة (المستند):", reply_markup=markup)
+    for doc in COURSES[section][subject].keys():
+        markup.add(f"📄 {subject} - {doc}")
+    markup.add("⬅️ عودة")
+    bot.send_message(message.chat.id, f"محاضرات {subject}:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: " - المستند" in message.text or " - المستند" in message.text)
-def deliver_files(message):
-    # هذه الدالة ستنفذ عند اختيار مستند معين
+@bot.message_handler(func=lambda m: "📄" in m.text)
+def handle_file_request(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    bot.reply_to(message, "⏳ جارٍ تجهيز الملفات من قبل الإدارة، ستكون متاحة هنا فور رفعها. شكراً لصبرك!")
+    bot.reply_to(message, "⏳ هذا الملف سيتم رفعه قريباً من قبل الإدارة. ترقبوا التحديث!")
 
-@bot.message_handler(func=lambda message: message.text == "⬅️ العودة للقائمة الرئيسية")
-def back_home(message):
+@bot.message_handler(func=lambda m: m.text == "⬅️ عودة")
+def back(message):
     send_welcome(message)
 
-# تشغيل البوت
+# --- تشغيل البوت مع السيرفر ---
 if __name__ == "__main__":
+    keep_alive() # تشغيل Flask في الخلفية
     print("البوت يعمل الآن...")
     bot.infinity_polling()
