@@ -22,19 +22,19 @@ def keep_alive():
 API_TOKEN = '8728241420:AAF6rmQfHyLRBJx-CfyBf44ol3F4atSOZXg'
 bot = telebot.TeleBot(API_TOKEN)
 
-# --- قاعدة البيانات (الهيكل الشامل) ---
+# --- قاعدة البيانات ---
 DATA_BASE = {
     "💊 قسم الصيدلة": {
         "الترم الأول": {
             "📚 القسم النظري": {
-                "🧪 كيمياء عقاقير": {"المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث", "التسجيل الرابع"], "المستند الرابع": ["التسجيل الخامس"]},
-                "💉 علم الأمراض": {"المستند الأول": [], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث"], "المستند الرابع": ["التسجيل الرابع", "التسجيل الخامس"], "المستند الخامس": ["التسجيل السادس", "التسجيل السابع", "التسجيل الثامن"], "المستند السادس": ["التسجيل التاسع"], "المستند السابع": ["التسجيل العاشر"], "المستند الثامن": ["التسجيل الحادي عشر"], "المستند التاسع": ["التسجيل الثاني عشر"]},
-                "💊 مهارات مهنية": {"المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث"], "المستند الرابع": ["التسجيل الرابع"], "المستند الخامس": ["التسجيل الخامس"]},
-                "🧬 تحليل آلي نظري": {"المستند الأول": [], "المستند الثاني": ["التسجيل الأول", "التسجيل الثاني", "التسجيل الثالث", "التسجيل الرابع", "التسجيل الخامس"], "المستند الثالث": []},
-                "💊 كيمياء صيدلانية": {"المستند الأول": [], "المستند الثاني": ["التسجيل الثاني", "التسجيل الثالث"], "المستند الثالث": ["التسجيل الرابع", "التسجيل الخامس", "التسجيل السادس"], "المستند الرابع": ["التسجيل السابع", "التسجيل الثامن", "التسجيل التاسع"]},
-                "💊 علم أدوية": {"المستند الأول": ["ت 1", "ت 2", "ت 3", "ت 4", "ت 5"], "المستند الثاني": ["ت 6", "ت 7", "ت 8", "ت 9", "ت 10", "ت 11"]},
+                "🧪 كيمياء عقاقير": {"المستند الأول": ["ت 1"], "المستند الثاني": ["ت 2"], "المستند الثالث": ["ت 3"], "المستند الرابع": ["ت 4"]},
+                "💉 علم الأمراض": {"المستند 1": [], "المستند 2": [], "المستند 3": [], "المستند 4": [], "المستند 5": [], "المستند 6": [], "المستند 7": [], "المستند 8": [], "المستند 9": []},
+                "💊 مهارات مهنية": {"المستند 1": [], "المستند 2": [], "المستند 3": [], "المستند 4": [], "المستند 5": []},
+                "🧬 تحليل آلي نظري": {"المستند 1": [], "المستند 2": [], "المستند 3": []},
+                "💊 كيمياء صيدلانية": {"المستند 1": [], "المستند 2": [], "المستند 3": [], "المستند 4": []},
+                "💊 علم أدوية": {"المستند 1": [], "المستند 2": []},
                 "🔬 أحياء دقيقة نظري": {f"المستند {i}": [] for i in range(1, 9)},
-                "🧪 تقنية صيدلانية نظري": {"المستند الأول": ["ت 1", "ت 2"], "المستند الثاني": ["ت 3", "ت 4"], "المستند الثالث": ["ت 5"]}
+                "🧪 تقنية صيدلانية نظري": {"المستند 1": [], "المستند 2": [], "المستند 3": []}
             },
             "🛠️ القسم العملي": {
                 "💊 تقنية صيدلانية عملي": {f"المستند {i}": [] for i in range(1, 6)},
@@ -44,12 +44,10 @@ DATA_BASE = {
         },
         "الترم الثاني": {}, "الترم الثالث": {}, "الترم الرابع": {}, "الترم الخامس": {}, "الترم السادس": {}
     },
-    "🩺 قسم مساعد طبيب": {},
-    "🦷 قسم طب الأسنان": {},
-    "🤱 قسم القبالة": {}
+    "🩺 قسم مساعد طبيب": {}, "🦷 قسم طب الأسنان": {}, "🤱 قسم القبالة": {}
 }
 
-# --- إدارة الأزرار والردود ---
+# --- إدارة التنقل ---
 user_state = {}
 
 @bot.message_handler(commands=['start'])
@@ -57,62 +55,96 @@ def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     buttons = [types.KeyboardButton(dept) for dept in DATA_BASE.keys()]
     markup.add(*buttons)
-    bot.send_message(message.chat.id, "مرحباً بك دكتور محمد في المنصة التعليمية!\nاختر القسم الدراسي:", reply_markup=markup)
+    bot.send_message(message.chat.id, "مرحباً بك دكتور محمد!\nاختر القسم الدراسي:", reply_markup=markup)
 
 @bot.message_handler(func=lambda m: m.text in DATA_BASE.keys())
 def handle_dept(message):
     dept = message.text
     if not DATA_BASE[dept]:
-        bot.reply_to(message, f"قسم {dept} قيد التجهيز حالياً. سيتم تفعيله قريباً بالتعاون مع مندوبي الدفعة!")
+        bot.reply_to(message, f"قسم {dept} قيد التجهيز حالياً...")
         return
-    
     user_state[message.chat.id] = {'dept': dept}
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     semesters = ["الترم الأول", "الترم الثاني", "الترم الثالث", "الترم الرابع", "الترم الخامس", "الترم السادس"]
     markup.add(*[types.KeyboardButton(s) for s in semesters], "⬅️ العودة للرئيسية")
-    bot.send_message(message.chat.id, f"تم اختيار {dept}. اختر الترم:", reply_markup=markup)
+    bot.send_message(message.chat.id, "اختر الترم:", reply_markup=markup)
 
 @bot.message_handler(func=lambda m: "الترم" in m.text)
 def handle_semester(message):
     chat_id = message.chat.id
     if chat_id not in user_state: return start(message)
-    
-    semester = message.text
-    dept = user_state[chat_id]['dept']
-    
-    if semester not in DATA_BASE[dept] or not DATA_BASE[dept][semester]:
-        bot.reply_to(message, f"بيانات {semester} لقسم {dept} لم ترفع بعد.")
-        return
-
-    user_state[chat_id]['semester'] = semester
+    user_state[chat_id]['semester'] = message.text
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add("📚 القسم النظري", "🛠️ القسم العملي", "⬅️ العودة للرئيسية")
-    bot.send_message(message.chat.id, "اختر النوع:", reply_markup=markup)
+    bot.send_message(chat_id, "اختر النوع:", reply_markup=markup)
 
 @bot.message_handler(func=lambda m: m.text in ["📚 القسم النظري", "🛠️ القسم العملي"])
 def handle_type(message):
     chat_id = message.chat.id
     if chat_id not in user_state: return start(message)
-    
     m_type = message.text
+    user_state[chat_id]['type'] = m_type
     dept = user_state[chat_id]['dept']
     sem = user_state[chat_id]['semester']
     
     subjects = DATA_BASE[dept][sem][m_type]
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add(*[types.KeyboardButton(sub) for sub in subjects.keys()], "⬅️ العودة للرئيسية")
-    bot.send_message(message.chat.id, f"مواد {m_type}:", reply_markup=markup)
+    
+    # قائمة المواد مع الإيموجيات كما في صورتك
+    subject_buttons = {
+        "كيمياء عقاقير": "🧪 كيمياء عقاقير",
+        "علم الأمراض": "💉 علم الأمراض",
+        "مهارات مهنية": "💊 مهارات مهنية",
+        "تحليل آلي نظري": "🧬 تحليل آلي نظري",
+        "كيمياء صيدلانية": "💊 كيمياء صيدلانية",
+        "علم أدوية": "💊 علم أدوية",
+        "أحياء دقيقة نظري": "🔬 أحياء دقيقة نظري",
+        "تقنية صيدلانية نظري": "🧪 تقنية صيدلانية نظري"
+    }
+
+    buttons = []
+    for sub in subjects.keys():
+        # تنظيف اسم المادة من الإيموجي للبحث عنه في القائمة
+        clean_name = sub.replace("🧪 ", "").replace("💉 ", "").replace("💊 ", "").replace("🧬 ", "").replace("🔬 ", "").strip()
+        display = subject_buttons.get(clean_name, sub)
+        buttons.append(types.KeyboardButton(display))
+    
+    markup.add(*buttons, "⬅️ العودة للرئيسية")
+    bot.send_message(chat_id, f"مواد {m_type}:", reply_markup=markup)
+
+@bot.message_handler(func=lambda m: any(word in m.text for word in ["كيمياء", "علم", "أحياء", "مهارات", "تحليل", "تقنية"]))
+def handle_subject_click(message):
+    chat_id = message.chat.id
+    if chat_id not in user_state or 'type' not in user_state[chat_id]: return start(message)
+
+    text = message.text
+    dept = user_state[chat_id]['dept']
+    sem = user_state[chat_id]['semester']
+    m_type = user_state[chat_id]['type']
+    
+    # البحث عن المادة بمطابقة جزئية لتفادي مشكلة الإيموجي
+    found_sub = None
+    for sub_name in DATA_BASE[dept][sem][m_type].keys():
+        clean_sub = sub_name.replace("🧪 ", "").replace("💉 ", "").replace("💊 ", "").replace("🧬 ", "").replace("🔬 ", "").strip()
+        if clean_sub in text:
+            found_sub = sub_name
+            break
+    
+    if found_sub:
+        docs = DATA_BASE[dept][sem][m_type][found_sub]
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        if not docs:
+            bot.reply_to(message, f"⏳ جاري رفع محاضرات {found_sub}...")
+            return
+        for doc in docs.keys():
+            markup.add(f"📄 {found_sub} - {doc}")
+        markup.add("⬅️ العودة للرئيسية")
+        bot.send_message(chat_id, f"محاضرات {found_sub}:", reply_markup=markup)
+    else:
+        bot.reply_to(message, "⏳ القسم قيد التحديث...")
 
 @bot.message_handler(func=lambda m: m.text == "⬅️ العودة للرئيسية")
 def go_home(message): start(message)
-
-@bot.message_handler(func=lambda m: True)
-def last_step(message):
-    # رسالة ذكية تظهر عند الضغط على اسم المادة
-    if any(sub in message.text for sub in ["كيمياء", "علم", "أحياء", "مهارات", "تحليل", "تقنية"]):
-        bot.reply_to(message, f"⏳ جاري رفع مستندات وتسجيلات '{message.text}'. ستكون متاحة هنا فور اكتمال الرفع!")
-    else:
-        bot.send_message(message.chat.id, "يرجى استخدام الأزرار للتنقل.")
 
 if __name__ == "__main__":
     keep_alive()
