@@ -4,15 +4,12 @@ from telebot import types
 from flask import Flask
 from threading import Thread
 
-# --- إعداد سيرفر وهمي لتجنب إغلاق Render المجاني ---
+# --- سيرفر الإيهام لـ Render المجاني ---
 app = Flask('')
-
 @app.route('/')
-def home():
-    return "البوت يعمل بنجاح!"
+def home(): return "المنصة التعليمية تعمل بنجاح!"
 
 def run():
-    # Render يرسل المنفذ تلقائياً عبر متغير البيئة PORT
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
@@ -21,108 +18,102 @@ def keep_alive():
     t.daemon = True
     t.start()
 
-# --- إعداد البوت ---
-API_TOKEN = '8728241420:AAF6rmQfHyLRBJx-CfyBf44ol3F4atSOZXg' # ضع التوكن هنا
+# --- إعداد البوت بالتوكن الخاص بك ---
+API_TOKEN = '8728241420:AAF6rmQfHyLRBJx-CfyBf44ol3F4atSOZXg'
 bot = telebot.TeleBot(API_TOKEN)
 
-# --- قاعدة بيانات المواد والمستندات ---
-COURSES = {
-    "📚 القسم النظري": {
-        "🧪 كيمياء عقاقير": {
-            "المستند الأول": ["التسجيل الأول"],
-            "المستند الثاني": ["التسجيل الثاني"],
-            "المستند الثالث": ["التسجيل الثالث", "التسجيل الرابع"],
-            "المستند الرابع": ["التسجيل الخامس"]
+# --- قاعدة البيانات (الهيكل الشامل) ---
+DATA_BASE = {
+    "💊 قسم الصيدلة": {
+        "الترم الأول": {
+            "📚 القسم النظري": {
+                "🧪 كيمياء عقاقير": {"المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث", "التسجيل الرابع"], "المستند الرابع": ["التسجيل الخامس"]},
+                "💉 علم الأمراض": {"المستند الأول": [], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث"], "المستند الرابع": ["التسجيل الرابع", "التسجيل الخامس"], "المستند الخامس": ["التسجيل السادس", "التسجيل السابع", "التسجيل الثامن"], "المستند السادس": ["التسجيل التاسع"], "المستند السابع": ["التسجيل العاشر"], "المستند الثامن": ["التسجيل الحادي عشر"], "المستند التاسع": ["التسجيل الثاني عشر"]},
+                "💊 مهارات مهنية": {"المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"], "المستند الثالث": ["التسجيل الثالث"], "المستند الرابع": ["التسجيل الرابع"], "المستند الخامس": ["التسجيل الخامس"]},
+                "🧬 تحليل آلي نظري": {"المستند الأول": [], "المستند الثاني": ["التسجيل الأول", "التسجيل الثاني", "التسجيل الثالث", "التسجيل الرابع", "التسجيل الخامس"], "المستند الثالث": []},
+                "💊 كيمياء صيدلانية": {"المستند الأول": [], "المستند الثاني": ["التسجيل الثاني", "التسجيل الثالث"], "المستند الثالث": ["التسجيل الرابع", "التسجيل الخامس", "التسجيل السادس"], "المستند الرابع": ["التسجيل السابع", "التسجيل الثامن", "التسجيل التاسع"]},
+                "💊 علم أدوية": {"المستند الأول": ["ت 1", "ت 2", "ت 3", "ت 4", "ت 5"], "المستند الثاني": ["ت 6", "ت 7", "ت 8", "ت 9", "ت 10", "ت 11"]},
+                "🔬 أحياء دقيقة نظري": {f"المستند {i}": [] for i in range(1, 9)},
+                "🧪 تقنية صيدلانية نظري": {"المستند الأول": ["ت 1", "ت 2"], "المستند الثاني": ["ت 3", "ت 4"], "المستند الثالث": ["ت 5"]}
+            },
+            "🛠️ القسم العملي": {
+                "💊 تقنية صيدلانية عملي": {f"المستند {i}": [] for i in range(1, 6)},
+                "🔬 أحياء دقيقة عملي": {"المستند الوحيد": []},
+                "🧬 تحليل آلي عملي": {f"المستند {i}": [] for i in range(1, 7)}
+            }
         },
-        "💉 علم الأمراض": {
-            "المستند الأول": [],
-            "المستند الثاني": ["التسجيل الثاني"],
-            "المستند الثالث": ["التسجيل الثالث"],
-            "المستند الرابع": ["التسجيل الرابع", "التسجيل الخامس"],
-            "المستند الخامس": ["التسجيل السادس", "التسجيل السابع", "التسجيل الثامن"],
-            "المستند السادس": ["التسجيل التاسع"],
-            "المستند السابع": ["التسجيل العاشر"],
-            "المستند الثامن": ["التسجيل الحادي عشر"],
-            "المستند التاسع": ["التسجيل الثاني عشر"]
-        },
-        "💊 مهارات مهنية": {
-            "المستند الأول": ["التسجيل الأول"],
-            "المستند الثاني": ["التسجيل الثاني"],
-            "المستند الثالث": ["التسجيل الثالث"],
-            "المستند الرابع": ["التسجيل الرابع"],
-            "المستند الخامس": ["التسجيل الخامس"]
-        },
-        "🧬 تحليل آلي نظري": {
-            "المستند الأول": [],
-            "المستند الثاني": ["التسجيل الأول", "التسجيل الثاني", "التسجيل الثالث", "التسجيل الرابع", "التسجيل الخامس"],
-            "المستند الثالث": []
-        },
-        "💊 كيمياء صيدلانية": {
-            "المستند الأول": [],
-            "المستند الثاني": ["التسجيل الثاني", "التسجيل الثالث"],
-            "المستند الثالث": ["التسجيل الرابع", "التسجيل الخامس", "التسجيل السادس"],
-            "المستند الرابع": ["التسجيل السابع", "التسجيل الثامن", "التسجيل التاسع"]
-        },
-        "💊 علم أدوية": {
-            "المستند الأول": ["التسجيل الأول", "التسجيل الثاني", "التسجيل الثالث", "التسجيل الرابع", "التسجيل الخامس"],
-            "المستند الثاني": ["التسجيل السادس", "التسجيل السابع", "التسجيل الثامن", "التسجيل التاسع", "التسجيل العاشر", "التسجيل الحادي عشر"]
-        },
-        "🔬 أحياء دقيقة نظري": {
-            "المستند الأول": ["التسجيل الأول"], "المستند الثاني": ["التسجيل الثاني"],
-            "المستند الثالث": [], "المستند الرابع": [], "المستند الخامس": [], 
-            "المستند السادس": [], "المستند السابع": [], "المستند الثامن": []
-        },
-        "🧪 تقنية صيدلانية نظري": {
-            "المستند الأول": ["التسجيل الأول", "التسجيل الثاني"],
-            "المستند الثاني": ["التسجيل الثالث", "التسجيل الرابع"],
-            "المستند الثالث": ["التسجيل الخامس"]
-        }
+        "الترم الثاني": {}, "الترم الثالث": {}, "الترم الرابع": {}, "الترم الخامس": {}, "الترم السادس": {}
     },
-    "🛠️ القسم العملي": {
-        "💊 تقنية صيدلانية عملي": {f"المستند {i}": [] for i in range(1, 6)},
-        "🔬 أحياء دقيقة عملي": {"المستند الوحيد": []},
-        "🧬 تحليل آلي عملي": {f"المستند {i}": [] for i in range(1, 7)}
-    }
+    "🩺 قسم مساعد طبيب": {},
+    "🦷 قسم طب الأسنان": {},
+    "🤱 قسم القبالة": {}
 }
 
-# --- لوحة التحكم والردود ---
+# --- إدارة الأزرار والردود ---
+user_state = {}
 
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("📚 القسم النظري", "🛠️ القسم العملي")
-    bot.reply_to(message, "مرحباً بك دكتور محمد! اختر القسم المطلوب للوصول للمحاضرات:", reply_markup=markup)
-
-@bot.message_handler(func=lambda m: m.text in COURSES.keys())
-def show_subjects(message):
-    section = message.text
+def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    subjects = list(COURSES[section].keys())
-    markup.add(*[types.KeyboardButton(s) for s in subjects])
-    markup.add("⬅️ عودة")
-    bot.send_message(message.chat.id, f"مواد {section}:", reply_markup=markup)
+    buttons = [types.KeyboardButton(dept) for dept in DATA_BASE.keys()]
+    markup.add(*buttons)
+    bot.send_message(message.chat.id, "مرحباً بك دكتور محمد في المنصة التعليمية!\nاختر القسم الدراسي:", reply_markup=markup)
 
-@bot.message_handler(func=lambda m: any(m.text in COURSES[sec] for sec in COURSES))
-def show_docs(message):
-    subject = message.text
-    section = "📚 القسم النظري" if subject in COURSES["📚 القسم النظري"] else "🛠️ القسم العملي"
+@bot.message_handler(func=lambda m: m.text in DATA_BASE.keys())
+def handle_dept(message):
+    dept = message.text
+    if not DATA_BASE[dept]:
+        bot.reply_to(message, f"قسم {dept} قيد التجهيز حالياً. سيتم تفعيله قريباً بالتعاون مع مندوبي الدفعة!")
+        return
+    
+    user_state[message.chat.id] = {'dept': dept}
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    semesters = ["الترم الأول", "الترم الثاني", "الترم الثالث", "الترم الرابع", "الترم الخامس", "الترم السادس"]
+    markup.add(*[types.KeyboardButton(s) for s in semesters], "⬅️ العودة للرئيسية")
+    bot.send_message(message.chat.id, f"تم اختيار {dept}. اختر الترم:", reply_markup=markup)
+
+@bot.message_handler(func=lambda m: "الترم" in m.text)
+def handle_semester(message):
+    chat_id = message.chat.id
+    if chat_id not in user_state: return start(message)
+    
+    semester = message.text
+    dept = user_state[chat_id]['dept']
+    
+    if semester not in DATA_BASE[dept] or not DATA_BASE[dept][semester]:
+        bot.reply_to(message, f"بيانات {semester} لقسم {dept} لم ترفع بعد.")
+        return
+
+    user_state[chat_id]['semester'] = semester
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for doc in COURSES[section][subject].keys():
-        markup.add(f"📄 {subject} - {doc}")
-    markup.add("⬅️ عودة")
-    bot.send_message(message.chat.id, f"محاضرات {subject}:", reply_markup=markup)
+    markup.add("📚 القسم النظري", "🛠️ القسم العملي", "⬅️ العودة للرئيسية")
+    bot.send_message(message.chat.id, "اختر النوع:", reply_markup=markup)
 
-@bot.message_handler(func=lambda m: "📄" in m.text)
-def handle_file_request(message):
-    bot.send_chat_action(message.chat.id, 'typing')
-    bot.reply_to(message, "⏳ هذا الملف سيتم رفعه قريباً من قبل الإدارة. ترقبوا التحديث!")
+@bot.message_handler(func=lambda m: m.text in ["📚 القسم النظري", "🛠️ القسم العملي"])
+def handle_type(message):
+    chat_id = message.chat.id
+    if chat_id not in user_state: return start(message)
+    
+    m_type = message.text
+    dept = user_state[chat_id]['dept']
+    sem = user_state[chat_id]['semester']
+    
+    subjects = DATA_BASE[dept][sem][m_type]
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup.add(*[types.KeyboardButton(sub) for sub in subjects.keys()], "⬅️ العودة للرئيسية")
+    bot.send_message(message.chat.id, f"مواد {m_type}:", reply_markup=markup)
 
-@bot.message_handler(func=lambda m: m.text == "⬅️ عودة")
-def back(message):
-    send_welcome(message)
+@bot.message_handler(func=lambda m: m.text == "⬅️ العودة للرئيسية")
+def go_home(message): start(message)
 
-# --- تشغيل البوت مع السيرفر ---
+@bot.message_handler(func=lambda m: True)
+def last_step(message):
+    # رسالة ذكية تظهر عند الضغط على اسم المادة
+    if any(sub in message.text for sub in ["كيمياء", "علم", "أحياء", "مهارات", "تحليل", "تقنية"]):
+        bot.reply_to(message, f"⏳ جاري رفع مستندات وتسجيلات '{message.text}'. ستكون متاحة هنا فور اكتمال الرفع!")
+    else:
+        bot.send_message(message.chat.id, "يرجى استخدام الأزرار للتنقل.")
+
 if __name__ == "__main__":
-    keep_alive() # تشغيل Flask في الخلفية
-    print("البوت يعمل الآن...")
+    keep_alive()
     bot.infinity_polling()
